@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contador Multi-Dispositivo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+        .container { max-width: 800px; width: 100%; background-color: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        h1 { font-size: 2.5rem; margin-bottom: 20px; }
+        .counter { font-size: 6rem; font-weight: bold; margin: 20px 0; }
+        .counter.reached { color: #ffeb3b; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1.1); } 50% { transform: scale(1.15); } 100% { transform: scale(1.1); } }
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background: white; color: #333; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%; position: relative; }
+        .reward-image { width: 100%; border-radius: 8px; }
+        @media (max-width: 600px) { .container { padding: 20px; } h1 { font-size: 2rem; } .counter { font-size: 4rem; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Contador Multi-Dispositivo</h1>
+        <p>¡Cada persona cuenta! Alcanza 5 para la recompensa.</p>
+        <div class="counter" id="counter">0</div>
+        <div id="message">Esperando que más personas se unan</div>
+        <div id="status">Estado: Conectando...</div>
+    </div>
+    
+    <div class="modal-overlay" id="rewardModal">
+        <div class="modal-content">
+            <button onclick="document.getElementById('rewardModal').classList.remove('active')">×</button>
+            <h2>¡Felicidades! Objetivo alcanzado</h2>
+            <img src="https://images.pexels.com/photos/34106378/pexels-photo-34106378.jpeg" alt="Imagen inspiradora" class="reward-image">
+            <p>Tú proceso será el testimonio que afirmará que para Dios no hay nada imposible.</p>
+        </div>
+    </div>
+
+    <script>
+        const counterEl = document.getElementById('counter');
+        const messageEl = document.getElementById('message');
+        const statusEl = document.getElementById('status');
+        const STORAGE_KEY = 'userCounter';
+        let userId = localStorage.getItem('userId') || 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 16);
+        localStorage.setItem('userId', userId);
+        
+        function updateCounter() {
+            let users = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            users[userId] = Date.now();
+            
+            // Limpiar usuarios inactivos
+            Object.keys(users).forEach(id => {
+                if (Date.now() - users[id] > 30000) delete users[id];
+            });
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+            const count = Object.keys(users).length;
+            
+            counterEl.textContent = count;
+            statusEl.textContent = `Estado: ${count} usuario(s) real(es)`;
+            
+            if (count >= 5) {
+                counterEl.classList.add('reached');
+                messageEl.textContent = '¡Objetivo alcanzado!';
+                document.getElementById('rewardModal').classList.add('active');
+            } else {
+                messageEl.textContent = `Necesitas ${5 - count} usuario(s) más`;
+            }
+        }
+        
+        setInterval(updateCounter, 2000);
+        updateCounter();
+    </script>
+</body>
+</html>
